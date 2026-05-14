@@ -1,0 +1,11 @@
+Chapter 2 of **Designing Data-Intensive Applications**, titled "Defining Nonfunctional Requirements," moves from high-level architecture to the specific metrics and goals used to judge a data system's success [1, 2].
+
+### **Summary of Chapter 2**
+
+*   **Reliability (Fault Tolerance)**: A reliable system continues to work correctly even when things go wrong ("faults") [3, 4]. Faults include **hardware failures** (disk crashes, power outages), **software faults** (runaway processes, bugs), and **human error** (misconfigurations) [5, 6]. The goal is usually fault tolerance rather than fault prevention [4].
+*   **Scalability**: This is the system's ability to cope with increased load [7]. It is not a one-dimensional label; instead, it involves identifying **load parameters**—such as the ratio of reads to writes or the number of simultaneous users—and determining how to add resources to keep performance stable [8-10].
+*   **Case Study: Social Network Timelines**: The chapter uses the example of building a service like **X (Twitter)** to illustrate scaling challenges [11]. It compares **write-side fan-out** (materializing a timeline when a tweet is posted) with **read-side joins** (gathering tweets when a user loads their timeline) [12, 13]. A major bottleneck is the **"celebrity problem"**, where a single post from a user with millions of followers can overwhelm write-side fan-out infrastructure [13, 14].
+*   **Performance Metrics**: To describe performance, we distinguish between **throughput** (the volume of work per second) and **response time** (what the client sees) [15]. Rather than using averages, engineers should focus on **percentiles** (such as p95 and p99) to understand **tail latency**, which often affects the most active or valuable users [16, 17].
+*   **Maintainability**: This refers to the long-term cost of software [3]. It has three main pillars: **operability** (making it easy for operations teams to keep the system running), **simplicity** (removing accidental complexity), and **evolvability** (making it easy to adapt the system to new requirements) [18, 19].
+
+***
