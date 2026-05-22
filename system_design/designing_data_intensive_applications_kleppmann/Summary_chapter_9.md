@@ -1,3 +1,44 @@
+
+### **Quality Notes: Chapter 9 - The Trouble with Distributed Systems**
+
+**1. Faults and Partial Failures**
+*   **Definition:** In distributed systems, parts of the system may break unpredictably while others continue to work [1]. 
+*   **Challenge:** Partial failures are non-deterministic; an operation involving multiple nodes might work, fail, or leave you completely unaware of its success or failure [1].
+
+**2. Unreliable Networks**
+*   **Asynchronous Packet Networks:** The internet and datacenters use networks that provide no guarantees about packet delivery or timing [2].
+*   **Fault Detection:** If a request is sent without a response, it is impossible to distinguish between a lost request, a crashed node, or a lost response [2]. **Timeouts** are the only practical way to detect faults [2].
+*   **Unbounded Delays:** Network congestion and switch queueing can cause packet delays to be unbounded [3, 4]. 
+
+**3. Unreliable Clocks**
+Computers use two different types of clocks, both of which have limitations:
+*   **Time-of-day clocks:** Return the current date and time. They are synchronized via NTP but can jump backward or forward in time, making them dangerous for measuring durations or ordering events [5].
+*   **Monotonic clocks:** Always move forward and are ideal for measuring durations or timeouts [5]. 
+*   **The Danger of Clock Skew:** Relying on synchronized time-of-day clocks for resolving conflicts (such as Last Write Wins) can lead to silent data loss because a node with a lagging clock might generate an older timestamp for a newer write [6, 7]. Clocks should be treated as having a "confidence interval" rather than an exact time [8].
+
+**4. Process Pauses**
+*   A running node can be paused at any time without warning due to "stop-the-world" Garbage Collection (GC), virtual machine suspension, or thread context switches [9].
+*   If a node is paused, it may hold a lock or lease that expires during the pause. When it wakes up, it will falsely believe it still holds the lock [10, 11].
+
+**5. Knowledge, Truth, and Lies**
+*   **Quorums (The Majority Rules):** A single node cannot be trusted to know the state of the system because it might be disconnected. "Truth" is established by a majority vote (a quorum) among the nodes [12, 13].
+*   **Fencing Tokens:** To prevent "zombie" nodes (nodes that paused, lost their lease, and woke up thinking they are still the leader) from corrupting data, the lock service issues a monotonically increasing token with every lease [14, 15]. The storage system rejects any writes with an older token than it has already seen [15, 16].
+*   **Byzantine Faults:** Occur when nodes actively lie or send malicious data to deceive the system [17]. While necessary to solve in decentralized systems (like blockchains), enterprise datacenters assume a crash-recovery fault model and trust their internal nodes, meaning Byzantine fault tolerance is rarely used [18].
+
+**6. System Models and Correctness**
+*   **System Models:** Engineers abstract system faults into models to design algorithms. The most realistic model is the **partially synchronous model**, which assumes the system behaves well most of the time but occasionally suffers from unbounded network delays, process pauses, and clock drift [19, 20].
+*   **Defining Correctness:** 
+    *   *Safety properties:* Guarantee that "nothing bad ever happens" (e.g., uniqueness of a token). If violated, the damage cannot be undone [21, 22].
+    *   *Liveness properties:* Guarantee that "something good eventually happens" (e.g., a node eventually receives a response) [22].
+*   **Testing:** Distributed systems are tested for edge cases using **Deterministic Simulation Testing (DST)** (which simulates network delays and pauses on actual code) and fault-injection frameworks like Jepsen [23].
+
+***
+
+
+
+Summary:
+
+
 Chapter 9 of **Designing Data-Intensive Applications**, titled "The Trouble with Distributed Systems," explores the harsh realities of distributed computing where anything that can go wrong will eventually go wrong. 
 
 Here is an informative summary of the key concepts from the chapter:
