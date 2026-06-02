@@ -1,40 +1,36 @@
 Chapter 3 of **Designing Data-Intensive Applications**, titled **"Data Models and Query Languages,"** explores how the way we represent data profoundly affects how we perceive and solve engineering problems [1, 2]. 
 
-Here are the structured, high-quality notes for Chapter 2, focusing on the core definitions, mechanisms, and metrics used to evaluate and design data-intensive systems.
+### **Quality Notes: Chapter 3 - Data Models and Query Languages**
 
-### **Quality Notes: Chapter 2 - Defining Nonfunctional Requirements**
+**1. Relational Versus Document Models**
+*   **The Relational Model:** Data is organized into relations (tables) containing unordered collections of tuples (rows) [1]. It provides strong support for **joins**, making it highly effective for **many-to-one** and **many-to-many** relationships [2, 3]. However, it often suffers from an **object-relational mismatch** (an impedance mismatch) because application code typically uses objects that must be translated into database tables using ORM (Object-Relational Mapping) frameworks [4].
+*   **The Document Model:** Data is stored as self-contained documents (typically JSON or XML) [5, 6]. It is best suited for data with a **one-to-many** (or one-to-few) tree structure where the entire tree is typically loaded at once [3, 7]. 
+*   **Data Locality:** Document models offer better **storage locality** because the entire document is stored continuously [6, 8]. Fetching a document requires a single query, whereas a relational model might require multiple queries or messy multiway joins [6, 8]. However, this locality advantage is wasted if the application only needs to access a small part of a large document [8].
 
-**1. Functional vs. Nonfunctional Requirements**
-*   **Functional Requirements:** What the application is supposed to do (e.g., the required screens, buttons, and specific operations) [1].
-*   **Nonfunctional Requirements:** The properties that determine how well the system operates, such as being fast, reliable, secure, legally compliant, and easy to maintain [1]. 
+**2. Schemas and Data Flexibility**
+*   **Schema-on-write:** Traditional relational databases use explicit schemas where the structure is statically checked and enforced when data is written [9].
+*   **Schema-on-read:** Document databases are often called "schemaless," but more accurately use *schema-on-read*. The structure of the data is implicit and dynamically interpreted by the application code when read [9]. This flexibility is advantageous for heterogeneous data or data whose structure is determined by external systems [10].
 
-**2. Case Study: Social Network Timelines and Fan-Out**
-*   **The Problem:** Building a home timeline requires gathering posts from all the accounts a user follows [2]. Doing this on the read-side via a relational join is too slow and expensive for high-volume systems [2, 3].
-*   **Materialization (Write-Side Fan-out):** Instead of computing the timeline on the fly, systems proactively precompute and update a materialized view (a cache) of the timeline whenever a new post is made [4]. One user's post is pushed to the timelines of all their followers, a multiplication effect known as "fan-out" [3].
-*   **The Celebrity Problem:** For highly followed accounts, write-side fan-out causes millions of immediate writes, overwhelming the system [4]. Systems solve this by handling celebrity posts separately, fetching them at read-time and merging them with the materialized timeline [4].
+**3. Normalization, Denormalization, and Joins**
+*   **Normalization:** Storing data using standardized IDs (like linking to a region ID) rather than plain-text strings [11]. This removes redundancy, ensures consistent spelling, and makes updates easy since the value is stored in only one place [11]. Normalized data is usually faster to write but slower to read because it requires joins [12].
+*   **Denormalization:** Storing redundant copies of data (like caching the human-readable text alongside the ID) [13]. Denormalized data is usually faster to read (since it avoids joins) but more expensive to write and keep consistent [12]. 
 
-**3. Describing Performance**
-*   **Throughput vs. Response Time:** **Throughput** is the rate of processing (e.g., requests or data volume per second) [5]. **Response time** is the total elapsed time a client waits for a response (including queueing and network delays) [5]. 
-*   **Latency:** Often used interchangeably with response time, but strictly refers to the time a request spends "latent" or waiting (e.g., network delay), not actively being processed [6].
-*   **Percentiles and Tail Latency:** Averages (means) are misleading because they hide outliers [7]. Engineers should measure percentiles (e.g., p95, p99, p99.9) to understand the worst-case "tail latencies" [8]. The p99.9 represents the slowest 1 in 1,000 requests, which often affect the most valuable power-users [8, 9].
-*   **SLOs and SLAs:** Service Level Objectives (SLOs) and Service Level Agreements (SLAs) define the expected performance (like a p99 under 1 second) and form a contract specifying consequences if the system falls short [10].
-*   **Metastable Failures:** If a system is overloaded, slow response times can cause clients to time out and resend requests. This causes a "retry storm," amplifying the load further in a vicious cycle known as a metastable failure [11].
+**4. Query Languages**
+*   **Declarative vs. Imperative:** Languages like SQL, Cypher, SPARQL, and Datalog are **declarative**; you specify *what* pattern of data you want, and the database's query optimizer figures out the *how* (which indexes and join algorithms to use) [4]. This allows the database to optimize execution, such as running it in parallel across multiple CPU cores [14]. In an **imperative** language, you must write out the algorithm step-by-step [4].
+*   **GraphQL:** A declarative query language designed for OLTP UI clients [15]. It allows the client to request a JSON document with a specific structure, retrieving exactly the fields necessary to render the UI, avoiding the need to change server-side APIs when UI requirements change [16, 17].
 
-**4. Reliability and Fault Tolerance**
-*   **Definition:** A reliable system continues to work correctly, performing its expected function, even when things go wrong (faults) [11]. 
-*   **Hardware Faults:** Hard drives crash, RAM corrupts, and datacenters lose power [12]. These are typically uncorrelated and are mitigated by adding hardware redundancy, which also enables zero-downtime "rolling upgrades" [13].
-*   **Software Faults:** Bugs in code are highly correlated and can cause cascading failures across many nodes [13, 14]. They often lie dormant until triggered by unusual circumstances [14].
-*   **Human Errors:** Humans are unreliable [15]. Systems must be designed to tolerate human mistakes (e.g., providing easy rollbacks) and organizations should foster a culture of "blameless postmortems" rather than punishing individuals [15-17].
+**5. Graph-Like Data Models**
+When data has highly interconnected **many-to-many relationships**, graph models are the most natural fit [18, 19]. 
+*   **Property Graphs:** Consist of **vertices** (nodes/entities) and **edges** (relationships/arcs) [20]. Both vertices and edges can hold properties (key-value pairs) [20]. This model is often queried using **Cypher**, a declarative language that uses ASCII-art style arrow notation to match patterns [21, 22].
+*   **Triple Stores and RDF:** Information is stored in simple three-part statements: `(subject, predicate, object)` [23]. The Resource Description Framework (RDF) was originally designed for the Semantic Web to facilitate internet-wide data exchange [24, 25]. Triple stores are queried using **SPARQL** [26].
+*   **Datalog:** A subset of Prolog that derives new virtual tables by applying logical **rules** to existing **facts** [27, 28]. It allows complex, recursive queries to be built up step-by-step [15].
 
-**5. Scalability**
-*   **Definition:** Scalability is the system's ability to cope with increased load by adding computing capacity [16]. 
-*   **Vertical vs. Horizontal Scaling:** Moving a system to a larger, more powerful machine is called *vertical scaling* (scaling up) [18]. Spreading the load across multiple smaller machines is called *horizontal scaling* (scaling out) and relies on shared-nothing architectures [18]. 
+**6. Event Sourcing and CQRS**
+*   **Event Sourcing:** A data modeling approach where every state change is recorded as an **immutable event** and appended to a log [29, 30]. The event log acts as the system of record [31]. It provides excellent auditability and minimizes irreversible data destruction [32].
+*   **CQRS (Command Query Responsibility Segregation):** The principle of maintaining the write-optimized event log separately from read-optimized **materialized views** [30]. The read models are asynchronously derived and updated based on the event log [31].
 
-**6. Maintainability**
-Because the majority of software cost goes into ongoing maintenance, systems must be built for the long term [19, 20]. This rests on three pillars:
-*   **Operability:** Making life easy for operations teams by providing good monitoring and routine maintenance tools [21].
-*   **Simplicity:** Managing complexity by using good abstractions and consistent patterns to remove "accidental complexity" [22].
-*   **Evolvability:** Designing the system so that it is easy to adapt to unanticipated future changes and requirements [21].
+**7. DataFrames, Matrices, and Arrays**
+*   Analytical and Machine Learning (ML) workloads often rely on numeric representations like **matrices** (two-dimensional arrays) and **DataFrames** (supported by tools like Pandas and Apache Spark) [33, 34]. These models facilitate linear algebra operations and allow complex data transformations (such as one-hot encoding categorical data) [34].
 
 
 
